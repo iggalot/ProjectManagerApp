@@ -12,6 +12,7 @@
       public CategoryModel Category { get; set; }
       public BasicUserModel Author { get; set; }
       public HashSet<string> AssignedDesigner { get; set; } = new();
+      public HashSet<string> UserVotes { get; set; } = new();
       public StatusModel ProjectStatus { get; set; }
       public string OwnerNotes { get; set; }
       public bool ApprovedForRelease { get; set; } = false;

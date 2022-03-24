@@ -12,6 +12,7 @@ public class UserModel
    public string EmailAddress { get; set; }
    public List<BasicProjectInfoModel> AuthoredProjects { get; set; } = new();
    public List<BasicProjectInfoModel> AssignedToProjects { get; set; } = new();
+   public List<BasicProjectInfoModel> VotedOnProjectInfos { get; set; } = new();
 
 
 }
