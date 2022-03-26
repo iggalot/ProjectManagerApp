@@ -1,8 +1,222 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+@inject ICategoryData categoryData
+@inject IStatusData statusData
+@inject IProjectInfoData projectinfoData
+@inject IUserData userData
+@inject NavigationManager navManager
+@inject ProtectedSessionStorage sessionStorage
 
-<h1>Hello, world!</h1>
+<h1>Training Suggestions</h1>
+<div>
+    <button>Project</button>
+</div>
 
-Welcome to your new app.
- 
+<div>
+    <div>@projects?.Count Projects</div>
+    <div>
+        <button @onclick="(() => OrderByNew(true))">New</button>
+        <button @onclick="(() => OrderByNew(false))">Popular</button>
+    </div>
+    <div>
+        <input type="text" placeholder="Search" 
+            aria-label="Search box" 
+            @oninput="((txt) => OnSearchInput((string)txt.Value))" />
+    </div>
+</div>
+
+<div>
+    <div>
+        @if (projects is not null)
+        {
+            <Virtualize Items="@projects" Context="s" OverscanCount="10">
+                <div>
+                    <div>
+                        <div>@GetUpvoteTopText(s)</div>
+                        <span class="oi oi-caret-top"></span>
+                        <div>@GetUpvoteBottomText(s)</div>
+                    </div>
+                    <div>
+                        <div @onclick="(()=> OpenDetails(s))">
+                            @s.ProjectName
+                        </div>
+                        <div>
+                            <div @onclick="(() => OpenDetails(s))">
+                                @s.Category?.CategoryName
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            @s.ProjectStatus?.StatusName
+                        </div>
+                    </div>
+                </div>
+            </Virtualize>
+        }
+    </div>
+    <div>
+        @if (categories is not null)
+        {
+            <div>
+                <span>Category</span>
+                <div @onclick="(() => OnCategoryClick())">All</div>
+                @foreach(var c in categories)
+                {
+                    <div @onclick="(() => OnCategoryClick(c.CategoryName))">@c.CategoryName</div>
+                }
+            </div>
+        }
+        @if (statuses is not null)
+        {
+            <div>
+                <span>Status</span>
+                <div @onclick="(() => OnStatusClick())">All</div>
+                @foreach(var s in statuses)
+                {
+                    <div @onclick="(() => OnStatusClick(s.StatusName))">@s.StatusName</div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+    private List<ProjectInfoModel> projects;
+    private List<CategoryModel> categories;
+    private List<StatusModel> statuses;
+
+    private string selectedCategory = "All";
+    private string selectedStatus = "All";
+    private string searchText = "";
+    private bool isSortedByNew = true;
+
+    protected async override Task OnInitializedAsync()
+    {
+        categories = await categoryData.GetAllCategories();
+        statuses = await statusData.GetAllStatuses();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadFilterState();
+            await FilterSuggestions();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadFilterState()
+    {
+        var stringResults = await sessionStorage.GetAsync<string>(nameof(selectedCategory));
+        selectedCategory = stringResults.Success ? stringResults.Value : "All";
+
+        stringResults = await sessionStorage.GetAsync<string>(nameof(selectedStatus));
+        selectedStatus = stringResults.Success ? stringResults.Value : "All";
+
+        stringResults = await sessionStorage.GetAsync<string>(nameof(searchText));
+        searchText = stringResults.Success ? stringResults.Value : "";
+
+        var boolResults = await sessionStorage.GetAsync<bool>(nameof(isSortedByNew));
+        isSortedByNew = boolResults.Success ? boolResults.Value : true;
+    }
+
+    private async Task SaveFilterState()
+    {
+        await sessionStorage.SetAsync(nameof(selectedCategory), selectedCategory);
+        await sessionStorage.SetAsync(nameof(selectedStatus), selectedStatus);
+        await sessionStorage.SetAsync(nameof(searchText), searchText);
+        await sessionStorage.SetAsync(nameof(isSortedByNew), isSortedByNew);
+    }
+
+    private async Task FilterSuggestions()
+    {
+        var output = await projectinfoData.GetAllApprovedProjectInfos();
+
+        if (selectedCategory != "All")
+        {
+            output = output.Where(s => s.Category?.CategoryName == selectedCategory).ToList();
+        }
+
+        if (selectedStatus != "All")
+        {
+            output = output.Where(s => s.ProjectStatus?.StatusName == selectedStatus).ToList();
+        }
+
+        if (string.IsNullOrWhiteSpace(searchText) == false)
+        {
+            output = output.Where(
+                s => s.ProjectName.Contains(searchText, StringComparison.InvariantCultureIgnoreCase) ||
+                s.Description.Contains(searchText, StringComparison.InvariantCultureIgnoreCase)
+            ).ToList();
+        }
+
+        if (isSortedByNew)
+        {
+            output = output.OrderByDescending(s => s.DateCreated).ToList();
+        } else
+        {
+            output = output.OrderByDescending(s => s.UserVotes.Count)
+                            .ThenByDescending(s => s.DateCreated).ToList();
+        }
+
+        projects = output;
+
+        await SaveFilterState();
+    }
+
+    private async Task OrderByNew(bool isNew)
+    {
+        isSortedByNew = isNew;
+        await FilterSuggestions();
+    }
+
+    private async Task OnSearchInput(string searchInput)
+    {
+        searchText = searchInput;
+        await FilterSuggestions();
+    }
+
+    private async Task OnCategoryClick(string category = "All")
+    {
+        selectedCategory = category;
+        await FilterSuggestions();
+    }
+
+    private async Task OnStatusClick(string status = "All")
+    {
+        selectedStatus = status;
+        await FilterSuggestions();
+    }
+
+    private string GetUpvoteTopText(ProjectInfoModel project)
+    {
+        if(project.UserVotes?.Count > 0)
+        {
+            return project.UserVotes.Count.ToString("00");
+        }
+        else
+        {
+            return "Click To";
+        }
+    }
+
+    private string GetUpvoteBottomText(ProjectInfoModel project)
+    {
+        if (project.UserVotes?.Count > 1)
+        {
+            return "Upvotes";
+        }
+        else
+        {
+            return "Upvote";
+        }
+    }
+
+    private void OpenDetails(ProjectInfoModel project)
+    {
+        navManager.NavigateTo($"/Details/{project.Id}");
+    }
+}
