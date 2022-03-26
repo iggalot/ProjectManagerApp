@@ -1,0 +1,96 @@
+﻿@page "/Details/{Id}"
+@inject IProjectInfoData projectinfoData
+@inject NavigationManager navManager
+
+<h1>Project Info Details</h1>
+
+<div>
+    <div>
+        @if(project is not null)
+        {
+            <div>
+                <div>
+                    <div>
+                        <div>@GetUpvoteTopText()</div>
+                        <span class="oi oi-caret-top"></span>
+                        <div>@GetUpvoteBottomText()</div>
+                    </div>
+                    <div>
+                        <div>@project.DateCreated.ToString("MM.dd.yyyy")</div>
+                    </div>
+                </div>
+                <div>
+                    <div>@project.ProjectName</div>
+                    <div>@project.Author.DisplayName</div>
+                    <div>@project.Description</div>
+                    <div>
+                        @project.Category.CategoryName
+                    </div>
+                </div>
+                <div>
+                    <button @onclick="ClosePage"></button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (project?.ProjectStatus is not null)
+{
+  <div>
+    <div>
+        <div></div>
+        <div>
+            <div>
+                @project.ProjectStatus.StatusName
+            </div>
+            <div>
+                @((MarkupString)project.OwnerNotes)
+            </div>
+        </div>
+    </div>
+</div>  
+}
+
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private ProjectInfoModel project;
+
+    protected async override Task OnInitializedAsync()
+    {
+        project = await projectinfoData.GetProjectInfo(Id);    
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo("/");
+    }
+
+        private string GetUpvoteTopText()
+    {
+        if(project.UserVotes?.Count > 0)
+        {
+            return project.UserVotes.Count.ToString("00");
+        }
+        else
+        {
+            return "Click To";
+        }
+    }
+
+    private string GetUpvoteBottomText()
+    {
+        if (project.UserVotes?.Count > 1)
+        {
+            return "Upvotes";
+        }
+        else
+        {
+            return "Upvote";
+        }
+    }
+}
