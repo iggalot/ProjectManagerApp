@@ -8,6 +8,7 @@ public interface IProjectInfoData
    Task<List<ProjectInfoModel>> GetAllProjectInfos();
    Task<List<ProjectInfoModel>> GetAllProjectsWaitingforApproval();
    Task<ProjectInfoModel> GetProjectInfo(string id);
+   Task<List<ProjectInfoModel>> GetUsersProjectInfos(string userId);
    Task UpdateProjectInfo(ProjectInfoModel project);
    Task UpvoteProjectInfo(string projectId, string userId);
 }

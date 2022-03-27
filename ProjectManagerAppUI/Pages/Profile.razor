@@ -1,0 +1,201 @@
+﻿@page "/Profile"
+@inject IProjectInfoData projectinfoData
+@inject IUserData userData
+@inject NavigationManager navManager
+
+<h1>My Profile</h1>
+
+<div>
+    <div>
+        <button @onclick="ClosePage"></button>
+    </div>
+</div>
+
+<div>
+    <h2>My Account</h2>
+    <p>
+        <a href="#">
+            Edit My Profile
+        </a>
+    </p>
+</div>
+
+@if (approved?.Count > 0)
+{
+    <div>
+        <h2>Approved Suggestions</h2>
+        <p>There are your projects that are currently active.</p>
+
+        @foreach (var s in approved)
+        {
+            <hr />
+            <div>
+                @s.ProjectName
+            </div>
+            <p>
+                @s.DateCreated.ToString("MM.dd.yyyy")
+            </p>
+            <p>
+                Total Votes: @s.UserVotes.Count
+            </p>
+            <p>
+                @s.Category.CategoryName
+            </p>
+            <p>
+                @s.Description
+            </p>
+            @if (s.ProjectStatus is not null)
+            {
+                <div>
+                    @s.ProjectStatus.StatusName
+                </div>
+                <p>
+                    @((MarkupString)s.OwnerNotes)
+                </p>
+            }
+        }
+    </div>
+}
+
+@if (archived?.Count > 0)
+{
+    <div>
+        <h2>Archived Suggestions</h2>
+        <p>There are your projects that are currently archived.</p>
+
+        @foreach (var s in archived)
+        {
+            <hr />
+            <div>
+                @s.ProjectName
+            </div>
+            <p>
+                @s.DateCreated.ToString("MM.dd.yyyy")
+            </p>
+            <p>
+                Total Votes: @s.UserVotes.Count
+            </p>
+            <p>
+                @s.Category.CategoryName
+            </p>
+            <p>
+                @s.Description
+            </p>
+            @if (s.ProjectStatus is not null)
+            {
+                <div>
+                    @s.ProjectStatus.StatusName
+                </div>
+                <p>
+                    @((MarkupString)s.OwnerNotes)
+                </p>
+            }
+        }
+    </div>
+}
+
+@if (pending?.Count > 0)
+{
+    <div>
+        <h2>Pending Suggestions</h2>
+        <p>There are your projects that are currently pending and not yet approved.</p>
+
+        @foreach (var s in pending)
+        {
+            <hr />
+            <div>
+                @s.ProjectName
+            </div>
+            <p>
+                @s.DateCreated.ToString("MM.dd.yyyy")
+            </p>
+            <p>
+                Total Votes: @s.UserVotes.Count
+            </p>
+            <p>
+                @s.Category.CategoryName
+            </p>
+            <p>
+                @s.Description
+            </p>
+            @if (s.ProjectStatus is not null)
+            {
+                <div>
+                    @s.ProjectStatus.StatusName
+                </div>
+                <p>
+                    @((MarkupString)s.OwnerNotes)
+                </p>
+            }
+        }
+    </div>
+}
+
+@if (rejected?.Count > 0)
+{
+    <div>
+        <h2>Rejected Suggestions</h2>
+        <p>There are your projects that have been rejected.</p>
+
+        @foreach (var s in rejected)
+        {
+            <hr />
+            <div>
+                @s.ProjectName
+            </div>
+            <p>
+                @s.DateCreated.ToString("MM.dd.yyyy")
+            </p>
+            <p>
+                Total Votes: @s.UserVotes.Count
+            </p>
+            <p>
+                @s.Category.CategoryName
+            </p>
+            <p>
+                @s.Description
+            </p>
+            @if (s.ProjectStatus is not null)
+            {
+                <div>
+                    @s.ProjectStatus.StatusName
+                </div>
+                <p>
+                    @((MarkupString)s.OwnerNotes)
+                </p>
+            }
+        }
+    </div>
+}
+
+@code {
+    private UserModel loggedInUser;
+    private List<ProjectInfoModel> submissions;
+    private List<ProjectInfoModel> approved;
+    private List<ProjectInfoModel> archived;
+    private List<ProjectInfoModel> pending;
+    private List<ProjectInfoModel> rejected;
+
+    protected async override Task OnInitializedAsync()
+    {
+        //TODO - Replace with user lookup
+        loggedInUser = await userData.GetUserFromAuthentication("abc-123");
+
+        var results = await projectinfoData.GetUsersProjectInfos(loggedInUser.Id);
+
+        if (loggedInUser is not null && results is not null)
+        {
+            submissions = results.OrderByDescending(s => s.DateCreated).ToList();
+            approved = submissions.Where(s => s.ApprovedForRelease && s.Archived == false && s.Rejected == false).ToList();
+            archived = submissions.Where(s => s.Archived && s.Rejected == false).ToList();
+            pending = submissions.Where(s => s.ApprovedForRelease == false && s.Rejected == false).ToList();
+            rejected = submissions.Where(s => s.Rejected).ToList();
+        }
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo("/");
+    }
+}
+   

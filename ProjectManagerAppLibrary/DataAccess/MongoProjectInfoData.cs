@@ -32,6 +32,19 @@ public class MongoProjectInfoData : IProjectInfoData
       return output;
    }
 
+   public async Task<List<ProjectInfoModel>> GetUsersProjectInfos(string userId)
+   {
+      var output = _cache.Get<List<ProjectInfoModel>>(userId);
+      if (output is null)
+      {
+         var results = await _projects.FindAsync(s => s.Author.Id == userId);
+         output = results.ToList();
+
+         _cache.Set(userId, output, TimeSpan.FromMinutes(1));
+      }
+
+      return output;
+   }
    public async Task<List<ProjectInfoModel>> GetAllApprovedProjectInfos()
    {
       var output = await GetAllProjectInfos();
