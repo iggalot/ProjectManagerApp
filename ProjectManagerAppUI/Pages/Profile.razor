@@ -1,5 +1,6 @@
 ﻿@page "/Profile"
 @attribute [Authorize]
+@inject AuthenticationStateProvider authProvider
 @inject IProjectInfoData projectinfoData
 @inject IUserData userData
 @inject NavigationManager navManager
@@ -179,8 +180,7 @@
 
     protected async override Task OnInitializedAsync()
     {
-        //TODO - Replace with user lookup
-        loggedInUser = await userData.GetUserFromAuthentication("abc-123");
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
 
         var results = await projectinfoData.GetUsersProjectInfos(loggedInUser.Id);
 

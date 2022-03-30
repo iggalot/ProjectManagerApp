@@ -1,5 +1,6 @@
 ﻿@page "/"
 
+@inject AuthenticationStateProvider authProvider;
 @inject ICategoryData categoryData
 @inject IStatusData statusData
 @inject IProjectInfoData projectinfoData
@@ -31,7 +32,7 @@
         {
             <Virtualize Items="@projects" Context="s" OverscanCount="10">
                 <div>
-                    <div>
+                    <div @onclick="(() => VoteUp(s))">
                         <div>@GetUpvoteTopText(s)</div>
                         <span class="oi oi-caret-top"></span>
                         <div>@GetUpvoteBottomText(s)</div>
@@ -83,6 +84,7 @@
 
 
 @code {
+    private UserModel loggedInUser;
     private List<ProjectInfoModel> projects;
     private List<CategoryModel> categories;
     private List<StatusModel> statuses;
@@ -96,6 +98,60 @@
     {
         categories = await categoryData.GetAllCategories();
         statuses = await statusData.GetAllStatuses();
+        await LoadAndVerifyUser();
+    }
+
+    private async Task LoadAndVerifyUser()
+    {
+        var authState = await authProvider.GetAuthenticationStateAsync();
+        string objectId = authState.User.Claims.FirstOrDefault(c => c.Type.Contains("objectidentifier"))?.Value;
+
+        if (string.IsNullOrWhiteSpace(objectId) == false)
+        {
+            loggedInUser = await userData.GetUserFromAuthentication(objectId) ?? new();
+
+            string firstName = authState.User.Claims.FirstOrDefault(c => c.Type.Contains("givenname"))?.Value;
+            string lastName = authState.User.Claims.FirstOrDefault(c => c.Type.Contains("surname"))?.Value;
+            string displayName = authState.User.Claims.FirstOrDefault(c => c.Type.Equals("name"))?.Value;
+            string email = authState.User.Claims.FirstOrDefault(c => c.Type.Contains("email"))?.Value;
+
+            bool isDirty = false;
+            if(objectId.Equals(loggedInUser.ObjectIdentifier) == false)
+            {
+                isDirty = true;
+                loggedInUser.ObjectIdentifier = objectId;
+            }
+            if(firstName.Equals(loggedInUser.FirstName) == false)
+            {
+                isDirty = true;
+                loggedInUser.FirstName = firstName;
+            }
+            if(lastName.Equals(loggedInUser.LastName) == false)
+            {
+                isDirty = true;
+                loggedInUser.LastName = lastName;
+            }
+            if(displayName.Equals(loggedInUser.DisplayName) == false)
+            {
+                isDirty = true;
+                loggedInUser.DisplayName = displayName;
+            }
+            if(email.Equals(loggedInUser.EmailAddress) == false)
+            {
+                isDirty = true;
+                loggedInUser.EmailAddress = email;
+            }
+            if (isDirty)
+            {
+                if (string.IsNullOrWhiteSpace(loggedInUser.Id))
+                {
+                    await userData.CreateUser(loggedInUser);
+                } else
+                {
+                    await userData.UpdateUser(loggedInUser);
+                }
+            }
+        }
     }
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -191,6 +247,35 @@
         await FilterSuggestions();
     }
 
+    private async Task VoteUp(ProjectInfoModel project)
+    {
+        if (loggedInUser is not null)
+        {
+            if (project.Author.Id == loggedInUser.Id)
+            {
+                // Can't vote on yor own suggestion
+                return;
+            }
+
+            if (project.UserVotes.Add(loggedInUser.Id) == false)
+            {
+                project.UserVotes.Remove(loggedInUser.Id);
+            }
+
+            await projectinfoData.UpvoteProjectInfo(project.Id, loggedInUser.Id);
+
+            if (isSortedByNew == false)
+            {
+                projects = projects.OrderByDescending(s => s.UserVotes.Count)
+                .ThenByDescending(s => s.DateCreated).ToList();
+            }
+        } 
+        else
+        {
+            navManager.NavigateTo("/MicrosoftIdentity/Account/SignIn", true);
+        }
+    }
+
     private string GetUpvoteTopText(ProjectInfoModel project)
     {
         if(project.UserVotes?.Count > 0)
@@ -199,7 +284,13 @@
         }
         else
         {
-            return "Click To";
+            if (project.Author.Id == loggedInUser?.Id)
+            {
+                return "Awaiting";
+            } else
+            {
+                return "Click To";
+            }
         }
     }
 

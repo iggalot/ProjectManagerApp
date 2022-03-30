@@ -91,10 +91,10 @@ public class MongoProjectInfoData : IProjectInfoData
             project.UserVotes.Remove(userId);
          }
 
-         await projectinfosInTransaction.ReplaceOneAsync(p => p.Id == projectId, project);
+         await projectinfosInTransaction.ReplaceOneAsync(session, p => p.Id == projectId, project);
 
          var usersInTransaction = db.GetCollection<UserModel>(_db.UserCollectionName);
-         var user = await _userData.GetUser(project.Author.Id);
+         var user = await _userData.GetUser(userId);
 
          if (isUpvote)
          {
@@ -103,9 +103,9 @@ public class MongoProjectInfoData : IProjectInfoData
          else
          {
             var projectinfoToRemove = user.VotedOnProjectInfos.Where(p => p.Id == projectId).First();
-            user.VotedOnProjectInfos.Remove(new BasicProjectInfoModel(project));
+            user.VotedOnProjectInfos.Remove(projectinfoToRemove);
          }
-         await usersInTransaction.ReplaceOneAsync(u => u.Id == userId, user);
+         await usersInTransaction.ReplaceOneAsync(session, u => u.Id == userId, user);
 
          await session.CommitTransactionAsync();
 

@@ -1,6 +1,9 @@
 ﻿@page "/Details/{Id}"
+
 @inject IProjectInfoData projectinfoData
 @inject NavigationManager navManager
+@inject AuthenticationStateProvider authProvider;
+@inject IUserData userData
 
 <h1>Project Info Details</h1>
 
@@ -10,7 +13,7 @@
         {
             <div>
                 <div>
-                    <div>
+                    <div @onclick="VoteUp">
                         <div>@GetUpvoteTopText()</div>
                         <span class="oi oi-caret-top"></span>
                         <div>@GetUpvoteBottomText()</div>
@@ -59,10 +62,12 @@
     public string Id { get; set; }
 
     private ProjectInfoModel project;
+    private UserModel loggedInUser;
 
     protected async override Task OnInitializedAsync()
     {
-        project = await projectinfoData.GetProjectInfo(Id);    
+        project = await projectinfoData.GetProjectInfo(Id);
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
     }
 
     private void ClosePage()
@@ -78,7 +83,14 @@
         }
         else
         {
-            return "Click To";
+            if (project.Author.Id == loggedInUser?.Id)
+            {
+                return "Awaiting";
+            } 
+            else
+            {
+                return "Click To";
+            }
         }
     }
 
@@ -91,6 +103,29 @@
         else
         {
             return "Upvote";
+        }
+    }
+
+    private async Task VoteUp()
+    {
+        if (loggedInUser is not null)
+        {
+            if (project.Author.Id == loggedInUser.Id)
+            {
+                // Can't vote on yor own suggestion
+                return;
+            }
+
+            if (project.UserVotes.Add(loggedInUser.Id) == false)
+            {
+                project.UserVotes.Remove(loggedInUser.Id);
+            }
+
+            await projectinfoData.UpvoteProjectInfo(project.Id, loggedInUser.Id);
+        } 
+        else
+        {
+            navManager.NavigateTo("/MicrosoftIdentity/Account/SignIn", true);
         }
     }
 }
