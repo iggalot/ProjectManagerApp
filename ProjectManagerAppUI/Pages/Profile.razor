@@ -5,17 +5,17 @@
 @inject IUserData userData
 @inject NavigationManager navManager
 
-<h1>My Profile</h1>
+<h1 class="page-heading text-uppercase mb-4">My Profile</h1>
 
-<div>
-    <div>
-        <button @onclick="ClosePage"></button>
+<div class="row">
+    <div class="col-12 close-button-section">
+        <button class="btn btn-close" @onclick="ClosePage"></button>
     </div>
 </div>
 
-<div>
-    <h2>My Account</h2>
-    <p>
+<div class="form-layout mb-3">
+    <h2 class="my-submission-heading">My Account</h2>
+    <p class="my-submission-text">
         <a href="MicrosoftIdentity/Account/EditProfile">
             Edit My Profile
         </a>
@@ -24,34 +24,34 @@
 
 @if (approved?.Count > 0)
 {
-    <div>
-        <h2>Approved Suggestions</h2>
-        <p>There are your projects that are currently active.</p>
+    <div class="form-layout mb-3">
+        <h2 class="my-submission-heading">Approved Suggestions</h2>
+        <p class="my-submission-text">There are your projects that are currently active.</p>
 
         @foreach (var s in approved)
         {
-            <hr />
-            <div>
+            <hr class="my-submission-separator" />
+            <div class="fw-bold project-detail-projectname">
                 @s.ProjectName
             </div>
-            <p>
+            <p class="my-submission-text">
                 @s.DateCreated.ToString("MM.dd.yyyy")
             </p>
-            <p>
+            <p class="my-submission-text">
                 Total Votes: @s.UserVotes.Count
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Category.CategoryName
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Description
             </p>
             @if (s.ProjectStatus is not null)
             {
-                <div>
+                <div class="fw-bold project-detail-projectname">
                     @s.ProjectStatus.StatusName
                 </div>
-                <p>
+                <p class="my-submission-text">
                     @((MarkupString)s.OwnerNotes)
                 </p>
             }
@@ -61,34 +61,34 @@
 
 @if (archived?.Count > 0)
 {
-    <div>
-        <h2>Archived Suggestions</h2>
-        <p>There are your projects that are currently archived.</p>
+    <div class="form-layout mb-3">
+        <h2 class="my-submission-heading">Archived Suggestions</h2>
+        <p class="my-submission-text">There are your projects that are currently archived.</p>
 
         @foreach (var s in archived)
         {
-            <hr />
-            <div>
+            <hr class="my-submission-separator" />
+            <div class="fw-bold project-detail-projectname">
                 @s.ProjectName
             </div>
-            <p>
+            <p class="my-submission-text">
                 @s.DateCreated.ToString("MM.dd.yyyy")
             </p>
-            <p>
+            <p class="my-submission-text">
                 Total Votes: @s.UserVotes.Count
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Category.CategoryName
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Description
             </p>
             @if (s.ProjectStatus is not null)
             {
-                <div>
+                <div class="fw-bold project-detail-projectname">
                     @s.ProjectStatus.StatusName
                 </div>
-                <p>
+                <p class="my-submission-text">
                     @((MarkupString)s.OwnerNotes)
                 </p>
             }
@@ -98,34 +98,34 @@
 
 @if (pending?.Count > 0)
 {
-    <div>
-        <h2>Pending Suggestions</h2>
-        <p>There are your projects that are currently pending and not yet approved.</p>
+    <div class="form-layout mb-3">
+        <h2 class="my-submission-heading">Pending Suggestions</h2>
+        <p class="my-submission-text">There are your projects that are currently pending and not yet approved.</p>
 
         @foreach (var s in pending)
         {
-            <hr />
-            <div>
+            <hr class="my-submission-separator" />
+            <div class="fw-bold project-detail-projectname">
                 @s.ProjectName
             </div>
-            <p>
+            <p class="my-submission-text">
                 @s.DateCreated.ToString("MM.dd.yyyy")
             </p>
-            <p>
+            <p class="my-submission-text">
                 Total Votes: @s.UserVotes.Count
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Category.CategoryName
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Description
             </p>
             @if (s.ProjectStatus is not null)
             {
-                <div>
+                <div class="fw-bold project-detail-projectname">
                     @s.ProjectStatus.StatusName
                 </div>
-                <p>
+                <p class="my-submission-text">
                     @((MarkupString)s.OwnerNotes)
                 </p>
             }
@@ -135,34 +135,34 @@
 
 @if (rejected?.Count > 0)
 {
-    <div>
-        <h2>Rejected Suggestions</h2>
-        <p>There are your projects that have been rejected.</p>
+    <div class="form-layout mb-3">
+        <h2 class="my-submission-heading">Rejected Suggestions</h2>
+        <p class="my-submission-text">There are your projects that have been rejected.</p>
 
         @foreach (var s in rejected)
         {
-            <hr />
-            <div>
+            <hr class="my-submission-separator" />
+            <div class="fw-bold project-detail-projectname">
                 @s.ProjectName
             </div>
-            <p>
+            <p class="my-submission-text">
                 @s.DateCreated.ToString("MM.dd.yyyy")
             </p>
-            <p>
+            <p class="my-submission-text">
                 Total Votes: @s.UserVotes.Count
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Category.CategoryName
             </p>
-            <p>
+            <p class="my-submission-text">
                 @s.Description
             </p>
             @if (s.ProjectStatus is not null)
             {
-                <div>
+                <div class="fw-bold project-detail-projectname">
                     @s.ProjectStatus.StatusName
                 </div>
-                <p>
+                <p class="my-submission-text">
                     @((MarkupString)s.OwnerNotes)
                 </p>
             }

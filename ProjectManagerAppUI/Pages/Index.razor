@@ -14,7 +14,7 @@
 </div>
 
 <div class="row">
-    <div class="projects-count col-md-4 text-light mt-2">@projects?.Count Projects</div>
+    <div class="projects-count col-md-4 mt-2">@projects?.Count Projects</div>
     <div class="col-md-4 col-xl-5 btn-group">
         <button class="btn btn-order @SortedByNewClass(true)" @onclick="(() => OrderByNew(true))">New</button>
         <button class="btn btn-order @SortedByNewClass(false)" @onclick="(() => OrderByNew(false))">Popular</button>
@@ -34,20 +34,40 @@
                 <div class="project-entry">
                     <div class="@GetVoteClass(s)" @onclick="(() => VoteUp(s))">
                         <div class="text-uppercase">@GetUpvoteTopText(s)</div>
-                        <span class="oi oi-caret-top" style="font-size: 3rem;"></span>
+                        <span class="oi oi-caret-top entry-upvote"></span>
                         <div class="text-uppercase">@GetUpvoteBottomText(s)</div>
                     </div>
                     <div class="project-entry-text">
                         <div class="project-entry-text-title" @onclick="(()=> OpenDetails(s))">
                             @s.ProjectName
                         </div>
-                        <div>
+                        @if(archivingProject is null || archivingProject.Id != s.Id)
+                    {
+                        <div class="project-entry-bottom">
                             <div class="project-entry-text-category" @onclick="(() => OpenDetails(s))">
                                 @s.Category?.CategoryName
                             </div>
+                            <AuthorizeView Policy="Admin">
+                                <button @onclick="(() => archivingProject = s)" class="btn-link project-entry-text-category btn-archive">
+                                    archive
+                                </button>
+                            </AuthorizeView>
                         </div>
+                    }
+                    else
+                    {
+                        <div class="project-entry-bottom">
+                            <button class="btn btn-archive btn-archive-confirm" @onclick="ArchiveProject">
+                                confirm
+                            </button>
+                            <button class="btn btn-archive btn-archive-reject" @onclick="(() => archivingProject = null)">
+                                cancel
+                            </button>
+                        </div>
+                    }
+
                     </div>
-                    <div class="project-entry-status @GetSuggestionStatusClass(s)">
+                    <div class="project-entry-status @GetStatusClass(s)">
                         <div class="project-entry-status-text">
                             @s.ProjectStatus?.StatusName
                         </div>
@@ -88,6 +108,7 @@
     private List<ProjectInfoModel> projects;
     private List<CategoryModel> categories;
     private List<StatusModel> statuses;
+    private ProjectInfoModel archivingProject;
 
     private string selectedCategory = "All";
     private string selectedStatus = "All";
@@ -99,6 +120,15 @@
         categories = await categoryData.GetAllCategories();
         statuses = await statusData.GetAllStatuses();
         await LoadAndVerifyUser();
+    }
+
+    private async Task ArchiveProject()
+    {
+        archivingProject.Archived = true;
+        await projectinfoData.UpdateProjectInfo(archivingProject);
+        projects.Remove(archivingProject);
+        archivingProject = null;
+        //await FilterSuggestions();
     }
 
     private void LoadCreatePage()
@@ -350,7 +380,7 @@
         }
     }
 
-    private string GetSuggestionStatusClass(ProjectInfoModel project)
+    private string GetStatusClass(ProjectInfoModel project)
     {
         if (project is null || project.ProjectStatus is null)
         {
