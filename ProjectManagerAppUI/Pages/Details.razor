@@ -27,8 +27,8 @@
                      <div class="project-detail-text">
                         <div class="fw-bold mb-2 project-detail-projectname">@project.ProjectName</div>
                         <div class="mb-2 project-detail-author">@project.Author.DisplayName</div>
-                        <div class="mb-2 ">@project.Description</div>
-                        <div class="project-entry-text-category">
+                        <div class="mb-2 d-none d-md-block">@project.Description</div>
+                        <div class="project-entry-text-category d-none d-md-block">
                             @project.Category.CategoryName
                         </div>
                     </div>
@@ -36,6 +36,12 @@
 
                 <div class="col-1 close-button-section">
                     <button class="btn btn-close" @onclick="ClosePage"></button>
+                </div>
+                <div class="row d-block d-md-none">
+                    <div class="project-detail-text">
+                        <div>@project.Description</div>
+                        <div class="project-entry-text-category">@project.Category.CategoryName</div>
+                    </div>
                 </div>
             </div>
         }
